@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
 
@@ -9,6 +9,41 @@ type GameState = 'menu' | 'demo';
 export default function Home() {
   const { address, isConnected } = useAccount();
   const [gameState, setGameState] = useState<GameState>('menu');
+  const [username, setUsername] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempUsername, setTempUsername] = useState('');
+
+  useEffect(() => {
+    if (address) {
+      fetch(`/api/username?address=${address}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.username) {
+            setUsername(data.username);
+          }
+        });
+    }
+  }, [address]);
+
+  const saveUsername = async () => {
+    if (!address || !tempUsername.trim()) return;
+    
+    const response = await fetch('/api/username', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address, username: tempUsername.trim() })
+    });
+    
+    if (response.ok) {
+      setUsername(tempUsername.trim());
+      setIsEditing(false);
+    }
+  };
+
+  const startEdit = () => {
+    setTempUsername(username);
+    setIsEditing(true);
+  };
 
   const startDemo = () => {
     setGameState('demo');
@@ -52,7 +87,48 @@ export default function Home() {
             <div className="bg-gray-700 p-4 rounded text-left">
               <p className="text-green-400 text-sm font-bold mb-2">✅ WALLET CONNECTED</p>
               <p className="text-gray-300 text-xs mb-1">Address: {address?.slice(0, 6)}...{address?.slice(-4)}</p>
-              <p className="text-gray-300 text-xs">Network: Base Sepolia</p>
+              <p className="text-gray-300 text-xs mb-2">Network: Base Sepolia</p>
+              
+              <div className="border-t border-gray-600 pt-2">
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={tempUsername}
+                      onChange={(e) => setTempUsername(e.target.value)}
+                      placeholder="Enter username"
+                      className="w-full bg-gray-600 text-white p-2 text-xs rounded"
+                      maxLength={20}
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveUsername}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-2 text-xs rounded"
+                      >
+                        SAVE
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 text-xs rounded"
+                      >
+                        CANCEL
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center">
+                    <p className="text-white text-xs">
+                      Username: {username || 'Not set'}
+                    </p>
+                    <button
+                      onClick={startEdit}
+                      className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 text-xs rounded"
+                    >
+                      {username ? 'EDIT' : 'SET'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <button 
               onClick={startDemo}
