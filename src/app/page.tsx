@@ -86,49 +86,47 @@ export default function Home() {
           <div className="space-y-4">
             <div className="bg-gray-700 p-4 rounded text-left">
               <p className="text-green-400 text-sm font-bold mb-2">✅ WALLET CONNECTED</p>
-              <p className="text-gray-300 text-xs mb-1">Address: {address?.slice(0, 6)}...{address?.slice(-4)}</p>
-              <p className="text-gray-300 text-xs mb-2">Network: Base Sepolia</p>
               
-              <div className="border-t border-gray-600 pt-2">
-                {isEditing ? (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={tempUsername}
-                      onChange={(e) => setTempUsername(e.target.value)}
-                      placeholder="Enter username"
-                      className="w-full bg-gray-600 text-white p-2 text-xs rounded"
-                      maxLength={20}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={saveUsername}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-2 text-xs rounded"
-                      >
-                        SAVE
-                      </button>
-                      <button
-                        onClick={() => setIsEditing(false)}
-                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 text-xs rounded"
-                      >
-                        CANCEL
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <p className="text-white text-xs">
-                      Username: {username || 'Not set'}
-                    </p>
+              {isEditing ? (
+                <div className="space-y-2 mb-2">
+                  <input
+                    type="text"
+                    value={tempUsername}
+                    onChange={(e) => setTempUsername(e.target.value)}
+                    placeholder="Enter username"
+                    className="w-full bg-gray-600 text-white p-2 text-xs rounded"
+                    maxLength={20}
+                  />
+                  <div className="flex gap-2">
                     <button
-                      onClick={startEdit}
-                      className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 text-xs rounded"
+                      onClick={saveUsername}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-2 text-xs rounded"
                     >
-                      {username ? 'EDIT' : 'SET'}
+                      SAVE
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 text-xs rounded"
+                    >
+                      CANCEL
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-white text-xs">
+                    Welcome {username || 'User'} • {address?.slice(0, 6)}...{address?.slice(-4)}
+                  </p>
+                  <button
+                    onClick={startEdit}
+                    className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 text-xs rounded"
+                  >
+                    {username ? 'EDIT' : 'SET NAME'}
+                  </button>
+                </div>
+              )}
+              
+              <p className="text-gray-300 text-xs">Network: Base Sepolia</p>
             </div>
             <button 
               onClick={startDemo}
