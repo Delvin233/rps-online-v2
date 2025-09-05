@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
+import Link from 'next/link';
 
 type GameState = 'menu' | 'demo';
 
@@ -56,7 +57,7 @@ export default function Home() {
   if (!isConnected) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-gray-800 border border-gray-600 rounded-lg p-8 max-w-md w-full text-center">
+        <div className="bg-gray-800 border border-gray-600 rounded-lg p-8 max-w-2xl w-full text-center">
           <h1 className="text-2xl mb-4 text-white">RPS-ONCHAIN</h1>
           <div className="bg-gray-700 p-4 rounded text-left mb-6">
             <p className="text-white text-sm font-bold mb-2">GAME RULES:</p>
@@ -76,9 +77,51 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-gray-800 border border-gray-600 rounded-lg p-8 max-w-md w-full text-center">
+      <div className="bg-gray-800 border border-gray-600 rounded-lg p-8 max-w-2xl w-full text-center">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl text-white">RPS-ONCHAIN</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl text-white">RPS-ONCHAIN</h1>
+            {isConnected && (
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={tempUsername}
+                      onChange={(e) => setTempUsername(e.target.value)}
+                      placeholder="Enter username"
+                      className="bg-gray-600 text-white p-1 text-sm rounded w-24"
+                      maxLength={15}
+                    />
+                    <button
+                      onClick={saveUsername}
+                      className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 text-xs rounded"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-2 py-1 text-xs rounded"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-300 text-sm">
+                      Welcome <span className="font-bold text-white">{username || 'User'}</span>
+                    </span>
+                    <button
+                      onClick={startEdit}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 text-xs rounded"
+                    >
+                      ✎
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <ConnectButton showBalance={false} />
         </div>
         
@@ -86,54 +129,22 @@ export default function Home() {
           <div className="space-y-4">
             <div className="bg-gray-700 p-4 rounded text-left">
               <p className="text-green-400 text-sm font-bold mb-2">✅ WALLET CONNECTED</p>
-              
-              {isEditing ? (
-                <div className="space-y-2 mb-2">
-                  <input
-                    type="text"
-                    value={tempUsername}
-                    onChange={(e) => setTempUsername(e.target.value)}
-                    placeholder="Enter username"
-                    className="w-full bg-gray-600 text-white p-2 text-xs rounded"
-                    maxLength={20}
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={saveUsername}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-2 text-xs rounded"
-                    >
-                      SAVE
-                    </button>
-                    <button
-                      onClick={() => setIsEditing(false)}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 text-xs rounded"
-                    >
-                      CANCEL
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-white text-xs">
-                    Welcome {username || 'User'} • {address?.slice(0, 6)}...{address?.slice(-4)}
-                  </p>
-                  <button
-                    onClick={startEdit}
-                    className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 text-xs rounded"
-                  >
-                    {username ? 'EDIT' : 'SET NAME'}
-                  </button>
-                </div>
-              )}
-              
+              <p className="text-gray-300 text-xs mb-1">Address: {address?.slice(0, 6)}...{address?.slice(-4)}</p>
               <p className="text-gray-300 text-xs">Network: Base Sepolia</p>
             </div>
-            <button 
-              onClick={startDemo}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 text-sm font-bold"
-            >
-              TEST WALLET FEATURES
-            </button>
+            <div className="max-w-md mx-auto space-y-3">
+              <button 
+                onClick={startDemo}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 text-sm font-bold rounded"
+              >
+                TEST WALLET FEATURES
+              </button>
+              <Link href="/play">
+                <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 text-sm font-bold rounded">
+                  PLAY GAME
+                </button>
+              </Link>
+            </div>
           </div>
         )}
         
