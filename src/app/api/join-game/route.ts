@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Game full' }, { status: 400 });
   }
   
-  updateGame(matchId, { player2: true });
+  updateGame(matchId, { player2: 'joined' });
   
   return NextResponse.json({ success: true });
 }
