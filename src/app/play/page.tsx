@@ -33,7 +33,7 @@ export default function PlayPage() {
       const response = await fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', roomId: newRoomId, address })
+        body: JSON.stringify({ action: 'create', roomId: newRoomId, address, username })
       });
       
       if (response.ok) {
@@ -60,7 +60,7 @@ export default function PlayPage() {
       const response = await fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'join', roomId: joinRoomId, address })
+        body: JSON.stringify({ action: 'join', roomId: joinRoomId, address, username })
       });
       
       if (response.ok) {

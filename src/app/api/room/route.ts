@@ -3,13 +3,14 @@ import { createRoom, joinRoom, getRoom, makeMove, resetGame, endMatch, requestPl
 import { getUsername } from '@/lib/userStore';
 
 export async function POST(request: Request) {
-  const { action, roomId, address, move } = await request.json();
+  const { action, roomId, address, move, username: providedUsername } = await request.json();
   
   if (!address) {
     return NextResponse.json({ error: 'Address required' }, { status: 400 });
   }
   
-  const username = getUsername(address) || 'User';
+  const username = providedUsername || getUsername(address) || 'User';
+  console.log(`Username for ${address}: ${username} (provided: ${providedUsername})`);
   
   if (action === 'create') {
     if (!roomId) {
