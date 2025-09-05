@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 });
   }
   
-  const newMoves = { ...game.moves, [player]: move };
+  const newMoves = { ...(game.moves || {}), [player]: move };
   let result = game.result;
   
   if (newMoves.player1 && newMoves.player2) {
