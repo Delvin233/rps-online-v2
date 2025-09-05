@@ -3,6 +3,8 @@ interface Game {
   player1?: string;
   player2?: string;
   status?: string;
+  moves?: Record<string, string>;
+  result?: string | null;
 }
 
 const games: Game[] = [];
