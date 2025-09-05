@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createRoom, joinRoom, getRoom, makeMove, resetGame, endMatch } from '@/lib/roomStore';
+import { createRoom, joinRoom, getRoom, makeMove, resetGame, endMatch, requestPlayAgain, leaveRoom } from '@/lib/roomStore';
 import { getUsername } from '@/lib/userStore';
 
 export async function POST(request: Request) {
@@ -65,6 +65,32 @@ export async function POST(request: Request) {
     }
     
     const room = endMatch(roomId);
+    if (!room) {
+      return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ room });
+  }
+  
+  if (action === 'request') {
+    if (!roomId) {
+      return NextResponse.json({ error: 'Room ID required' }, { status: 400 });
+    }
+    
+    const room = requestPlayAgain(roomId, address);
+    if (!room) {
+      return NextResponse.json({ error: 'Cannot request play again' }, { status: 400 });
+    }
+    
+    return NextResponse.json({ room });
+  }
+  
+  if (action === 'leave') {
+    if (!roomId) {
+      return NextResponse.json({ error: 'Room ID required' }, { status: 400 });
+    }
+    
+    const room = leaveRoom(roomId, address);
     if (!room) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 });
     }

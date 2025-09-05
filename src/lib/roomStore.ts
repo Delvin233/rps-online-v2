@@ -15,6 +15,7 @@ interface Room {
     creatorMove: string;
     joinerMove: string;
   };
+  playAgainRequest?: string; // address of player who requested
 }
 
 const rooms = new Map<string, Room>();
@@ -28,6 +29,7 @@ export function createRoom(id: string, creator: string, creatorUsername: string)
     createdAt: Date.now()
   };
   rooms.set(id, room);
+  console.log(`Room created: ${id}, total rooms: ${rooms.size}`);
   return room;
 }
 
@@ -42,11 +44,24 @@ export function joinRoom(id: string, joiner: string, joinerUsername: string): Ro
 }
 
 export function getRoom(id: string): Room | null {
-  return rooms.get(id) || null;
+  const room = rooms.get(id) || null;
+  console.log(`Getting room ${id}: ${room ? 'found' : 'not found'}, total rooms: ${rooms.size}`);
+  if (rooms.size > 0) {
+    console.log('Available rooms:', Array.from(rooms.keys()));
+  }
+  return room;
 }
 
 export function getAllRooms(): Room[] {
   return Array.from(rooms.values());
+}
+
+export function requestPlayAgain(roomId: string, player: string): Room | null {
+  const room = rooms.get(roomId);
+  if (!room || room.status !== 'finished') return null;
+  
+  room.playAgainRequest = player;
+  return room;
 }
 
 export function resetGame(roomId: string): Room | null {
@@ -55,7 +70,16 @@ export function resetGame(roomId: string): Room | null {
   
   room.moves = {};
   room.result = undefined;
+  room.playAgainRequest = undefined;
   room.status = 'ready';
+  return room;
+}
+
+export function leaveRoom(roomId: string, player: string): Room | null {
+  const room = rooms.get(roomId);
+  if (!room) return null;
+  
+  room.status = 'ended';
   return room;
 }
 

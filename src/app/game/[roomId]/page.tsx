@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   const [selectedMove, setSelectedMove] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [autoResetTriggered, setAutoResetTriggered] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   useEffect(() => {
     const getParams = async () => {
@@ -34,7 +35,26 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     }
   }, [address]);
 
-  const playAgain = async () => {
+  const requestPlayAgain = useCallback(async () => {
+    if (!address || !roomId) return;
+    
+    try {
+      const response = await fetch('/api/room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request', roomId, address })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRoom(data.room);
+      }
+    } catch (error) {
+      console.error('Error requesting play again:', error);
+    }
+  }, [address, roomId]);
+
+  const acceptPlayAgain = useCallback(async () => {
     if (!address || !roomId) return;
     
     setSelectedMove(null);
@@ -49,13 +69,11 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
       if (response.ok) {
         const data = await response.json();
         setRoom(data.room);
-      } else {
-        console.error('Failed to reset game:', await response.text());
       }
     } catch (error) {
-      console.error('Error resetting game:', error);
+      console.error('Error accepting play again:', error);
     }
-  };
+  }, [address, roomId]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -63,21 +81,33 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     const fetchRoom = async () => {
       const response = await fetch(`/api/room?roomId=${roomId}`);
       const data = await response.json();
+      console.log('Fetched room data:', data);
       setRoom(data.room);
       
       // Auto-reset if tie (only once per tie)
       if (data.room?.status === 'finished' && data.room?.result?.winner === 'tie' && !autoResetTriggered && address) {
         setAutoResetTriggered(true);
-        setTimeout(() => {
-          if (address) {
-            playAgain();
-          }
-        }, 3000); // 3 second delay to show tie result
+        setCountdown(3);
+        
+        const countdownInterval = setInterval(() => {
+          setCountdown(prev => {
+            if (prev === null || prev <= 1) {
+              clearInterval(countdownInterval);
+              if (address) {
+                acceptPlayAgain();
+              }
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       }
       
-      // Reset auto-reset flag when game resets
+      // Reset auto-reset flag and selected move when game resets
       if (data.room?.status === 'ready') {
         setAutoResetTriggered(false);
+        setSelectedMove(null);
+        setCountdown(null);
       }
     };
     
@@ -86,7 +116,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     // Poll for game updates
     const interval = setInterval(fetchRoom, 2000);
     return () => clearInterval(interval);
-  }, [roomId, address, autoResetTriggered, playAgain]);
+  }, [roomId, address, autoResetTriggered, acceptPlayAgain]);
 
   const makeMove = async (move: 'rock' | 'paper' | 'scissors') => {
     setSelectedMove(move);
@@ -107,6 +137,19 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     setGameStarted(true);
   };
 
+  const leaveMatch = async () => {
+    const response = await fetch('/api/room', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'leave', roomId, address })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      setRoom(data.room);
+    }
+  };
+
   const endMatch = async () => {
     const response = await fetch('/api/room', {
       method: 'POST',
@@ -117,6 +160,21 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     if (response.ok) {
       const data = await response.json();
       setRoom(data.room);
+    }
+  };
+
+  const handleBackToLobby = () => {
+    // Check if game is active (not finished or ended)
+    const isGameActive = room?.status === 'ready' || (room?.status === 'finished' && !room.result);
+    
+    if (isGameActive) {
+      const confirmed = window.confirm('Are you sure you want to leave? This will end the match for both players.');
+      if (confirmed) {
+        leaveMatch();
+        window.location.href = '/play';
+      }
+    } else {
+      window.location.href = '/play';
     }
   };
 
@@ -134,6 +192,17 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     );
   }
 
+  if (!room && roomId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-gray-800 border border-gray-600 rounded-lg p-8 max-w-2xl w-full text-center">
+          <p className="text-white">Loading room {roomId}...</p>
+          <p className="text-gray-300 text-xs mt-2">If this persists, the room may not exist</p>
+        </div>
+      </div>
+    );
+  }
+  
   if (!room) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -192,7 +261,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
             <>
               <div className="bg-red-600 p-4 rounded">
                 <h2 className="text-white text-xl font-bold mb-2">MATCH ENDED</h2>
-                <p className="text-white text-sm">One player ended the match</p>
+                <p className="text-white text-sm">Your opponent left the match</p>
               </div>
               
               <div className="bg-gray-700 p-4 rounded text-center">
@@ -215,7 +284,9 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
                      ? 'YOU WIN!' : 'YOU LOSE!'}
                 </h2>
                 {room.result?.winner === 'tie' && (
-                  <p className="text-white text-sm">Auto-restarting in 3 seconds...</p>
+                  <p className="text-white text-sm">
+                    {countdown ? `Auto-restarting in ${countdown}...` : 'Restarting...'}
+                  </p>
                 )}
               </div>
               
@@ -234,20 +305,47 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               </div>
               
               {room.result?.winner !== 'tie' && (
-                <div className="space-y-2">
-                  <button
-                    onClick={playAgain}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 text-sm font-bold rounded"
-                  >
-                    PLAY AGAIN
-                  </button>
-                  <button
-                    onClick={endMatch}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 text-sm font-bold rounded"
-                  >
-                    END MATCH
-                  </button>
-                </div>
+                room.playAgainRequest ? (
+                  room.playAgainRequest === address ? (
+                    <div className="bg-yellow-600 p-3 rounded">
+                      <p className="text-white text-sm font-bold">WAITING FOR OPPONENT...</p>
+                      <p className="text-white text-xs mt-1">You requested to play again</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="bg-blue-600 p-3 rounded">
+                        <p className="text-white text-sm font-bold">OPPONENT WANTS TO PLAY AGAIN</p>
+                      </div>
+                      <button
+                        onClick={acceptPlayAgain}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 text-sm font-bold rounded"
+                      >
+                        ACCEPT
+                      </button>
+                      <button
+                        onClick={endMatch}
+                        className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 text-sm font-bold rounded"
+                      >
+                        DECLINE & END MATCH
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      onClick={requestPlayAgain}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 text-sm font-bold rounded"
+                    >
+                      PLAY AGAIN
+                    </button>
+                    <button
+                      onClick={endMatch}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 text-sm font-bold rounded"
+                    >
+                      END MATCH
+                    </button>
+                  </div>
+                )
               )}
             </>
           ) : (
@@ -278,11 +376,12 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
             </>
           )}
           
-          <Link href="/play">
-            <button className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 text-sm rounded">
-              BACK TO LOBBY
-            </button>
-          </Link>
+          <button 
+            onClick={handleBackToLobby}
+            className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 text-sm rounded"
+          >
+            BACK TO LOBBY
+          </button>
         </div>
       </div>
     </div>

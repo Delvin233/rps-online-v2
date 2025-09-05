@@ -29,15 +29,25 @@ export default function PlayPage() {
     setIsCreating(true);
     const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     
-    const response = await fetch('/api/room', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', roomId: newRoomId, address })
-    });
-    
-    if (response.ok) {
-      setRoomId(newRoomId);
-      startPolling(newRoomId);
+    try {
+      const response = await fetch('/api/room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', roomId: newRoomId, address })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Room created successfully:', data);
+        setRoomId(newRoomId);
+        startPolling(newRoomId);
+      } else {
+        console.error('Failed to create room:', await response.text());
+        alert('Failed to create room');
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+      alert('Error creating room');
     }
     setIsCreating(false);
   };
@@ -46,16 +56,25 @@ export default function PlayPage() {
     if (!joinRoomId.trim()) return;
     setIsJoining(true);
     
-    const response = await fetch('/api/room', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'join', roomId: joinRoomId, address })
-    });
-    
-    if (response.ok) {
-      window.location.href = `/game/${joinRoomId}`;
-    } else {
-      alert('Room not found or full');
+    try {
+      const response = await fetch('/api/room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'join', roomId: joinRoomId, address })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Joined room successfully:', data);
+        window.location.href = `/game/${joinRoomId}`;
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to join room:', errorText);
+        alert(`Failed to join room: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error joining room:', error);
+      alert('Error joining room');
     }
     setIsJoining(false);
   };
