@@ -7,7 +7,17 @@ import Link from 'next/link';
 
 export default function GamePage({ params }: { params: Promise<{ roomId: string }> }) {
   const { address, isConnected } = useAccount();
-  const [room, setRoom] = useState<any>(null);
+  const [room, setRoom] = useState<{
+    id: string;
+    creator: string;
+    creatorUsername: string;
+    joiner?: string;
+    joinerUsername?: string;
+    status: 'waiting' | 'ready' | 'playing' | 'finished' | 'ended';
+    moves?: { creator?: string; joiner?: string };
+    result?: { winner: string; creatorMove: string; joinerMove: string };
+    playAgainRequest?: string;
+  } | null>(null);
   const [username, setUsername] = useState('');
   const [roomId, setRoomId] = useState('');
   const [selectedMove, setSelectedMove] = useState<string | null>(null);
@@ -42,7 +52,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
       const response = await fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'request', roomId, address })
+        body: JSON.stringify({ action: 'request', roomId, address, username })
       });
       
       if (response.ok) {
@@ -63,7 +73,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
       const response = await fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reset', roomId, address })
+        body: JSON.stringify({ action: 'reset', roomId, address, username })
       });
       
       if (response.ok) {
@@ -124,7 +134,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     const response = await fetch('/api/room', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'move', roomId, address, move })
+      body: JSON.stringify({ action: 'move', roomId, address, move, username })
     });
     
     if (response.ok) {
@@ -141,7 +151,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     const response = await fetch('/api/room', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'leave', roomId, address })
+      body: JSON.stringify({ action: 'leave', roomId, address, username })
     });
     
     if (response.ok) {
@@ -154,7 +164,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     const response = await fetch('/api/room', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'end', roomId, address })
+      body: JSON.stringify({ action: 'end', roomId, address, username })
     });
     
     if (response.ok) {
