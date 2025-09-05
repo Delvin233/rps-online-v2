@@ -6,10 +6,7 @@ export async function POST() {
   
   const newGame = {
     matchId,
-    player1: true,
-    player2: false,
-    moves: {},
-    result: null
+    status: 'waiting'
   };
   
   addGame(newGame);
