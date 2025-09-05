@@ -7,7 +7,17 @@ import Link from 'next/link';
 
 export default function GamePage({ params }: { params: Promise<{ roomId: string }> }) {
   const { address, isConnected } = useAccount();
-  const [room, setRoom] = useState<any>(null);
+  const [room, setRoom] = useState<{
+    id: string;
+    creator: string;
+    creatorUsername: string;
+    joiner?: string;
+    joinerUsername?: string;
+    status: 'waiting' | 'ready' | 'playing' | 'finished' | 'ended';
+    moves?: { creator?: string; joiner?: string };
+    result?: { winner: string; creatorMove: string; joinerMove: string };
+    playAgainRequest?: string;
+  } | null>(null);
   const [username, setUsername] = useState('');
   const [roomId, setRoomId] = useState('');
   const [selectedMove, setSelectedMove] = useState<string | null>(null);

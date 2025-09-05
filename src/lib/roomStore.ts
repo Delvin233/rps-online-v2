@@ -75,7 +75,7 @@ export function resetGame(roomId: string): Room | null {
   return room;
 }
 
-export function leaveRoom(roomId: string, player: string): Room | null {
+export function leaveRoom(roomId: string): Room | null {
   const room = rooms.get(roomId);
   if (!room) return null;
   

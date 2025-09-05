@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Room ID required' }, { status: 400 });
     }
     
-    const room = leaveRoom(roomId, address);
+    const room = leaveRoom(roomId);
     if (!room) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 });
     }

@@ -1,8 +1,3 @@
-interface User {
-  address: string;
-  username: string;
-}
-
 const users = new Map<string, string>();
 
 export function setUsername(address: string, username: string) {
